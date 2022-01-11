@@ -4,6 +4,41 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/* --------------
+   Error handling
+   -------------- */
+
+typedef enum cifex_result
+{
+   cifex_ok,
+   /// Ran out of memory while performing the operation.
+   cifex_out_of_memory,
+
+   cifex__last_own_result,
+
+   /// The first `errno` value. Results can be compared against this to check whether they are
+   /// `errno`s or not.
+   cifex_errno = 0x8000,
+} cifex_result_t;
+
+/// Creates a result from an `errno` value.
+inline cifex_result_t
+cifex_errno_result(int err)
+{
+   return cifex_errno | err;
+}
+
+/// Extracts an `errno` from a result.
+inline int
+cifex_get_errno(cifex_result_t result)
+{
+   return result & ~cifex_errno;
+}
+
+/// Converts a `cifex_result_t` to a string.
+const char *
+cifex_result_to_string(cifex_result_t result);
+
 /* ----------
    Allocation
    ---------- */
@@ -42,38 +77,29 @@ struct cifex_reader;
 
 typedef size_t (*cifex_fread_fn)(struct cifex_reader *reader, void *out, size_t n_bytes);
 
+typedef int (*cifex_fseek_fn)(struct cifex_reader *reader, long offset, int whence);
+
+typedef long (*cifex_ftell_fn)(struct cifex_reader *reader);
+
 /// A file reader.
+///
+/// The functions in this reader are expected to exhibit behavior similar to that of libc functions,
+/// that is, they shoukd use errno and sentinel values for error handling.
 typedef struct cifex_reader
 {
    void *user_data;
-   cifex_fread_fn fread;
+   cifex_fread_fn read;
+   cifex_fseek_fn seek;
+   cifex_ftell_fn tell;
 } cifex_reader_t;
 
 /// `fopen`s a file reader.
-cifex_reader_t
-cifex_fopen(const char *filename);
+cifex_result_t
+cifex_fopen(cifex_reader_t *reader, const char *filename);
 
-/// `fclose`s a file reader. This can only be used on readers opened with
-/// `cifex_reader_fopen`.
-void
+/// `fclose`s a file reader. This must only be used on readers opened with `cifex_reader_fopen`.
+cifex_result_t
 cifex_fclose(cifex_reader_t *reader);
-
-/* --------------
-   Error handling
-   -------------- */
-
-typedef enum cifex_result
-{
-   cifex_ok,
-   /// Ran out of memory while performing the operation.
-   cifex_out_of_memory,
-
-   cifex__last_result,
-} cifex_result_t;
-
-/// Converts a `cifex_result_t` to a string.
-const char *
-cifex_result_to_string(cifex_result_t result);
 
 /* --------------
    Image handling
