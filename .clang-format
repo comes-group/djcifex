@@ -8,3 +8,4 @@ AlignEscapedNewlines: DontAlign
 IndentPPDirectives: AfterHash
 PPIndentWidth: 1
 IndentExternBlock: NoIndent
+AlignOperands: DontAlign

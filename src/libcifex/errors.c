@@ -11,6 +11,11 @@ cifex_get_errno(cifex_result_t result);
 static const char *cx_result_strings[] = {
    [cifex_ok] = "the operation completed successfully",
    [cifex_out_of_memory] = "ran out of memory while performing the operation",
+   [cifex_empty_image_file] = "the image file is empty",
+   [cifex_syntax_error] = "syntax error",
+   [cifex_invalid_version] = "invalid format version (version cannot be zero)",
+   [cifex_unsupported_version] = "unsupported format version. is the decoder too old?",
+   [cifex_invalid_bpp] = "invalid bits per pixel (must be 24 for RGBA or 32 for RGB)",
 };
 
 static const char *cx_invalid_result = "<invalid result value>";

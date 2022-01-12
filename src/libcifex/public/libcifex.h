@@ -1,8 +1,15 @@
 #ifndef LIBCIFEX_H
 #define LIBCIFEX_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+/* --------------
+   Constants
+   -------------- */
+
+#define CIFEX_FORMAT_VERSION 1
 
 /* --------------
    Error handling
@@ -17,6 +24,14 @@ typedef enum cifex_result
    cifex_empty_image_file,
    /// A syntax error was found.
    cifex_syntax_error,
+   /// This format version is invalid.
+   ///
+   /// Emitted when the format version is `zero`.
+   cifex_invalid_version,
+   /// This decoder is too old to decode files of the given version.
+   cifex_unsupported_version,
+   /// This number of bits per pixel is not supported.
+   cifex_invalid_bpp,
 
    cifex__last_own_result,
 
@@ -139,22 +154,31 @@ typedef struct cifex_image
    uint8_t *data;
 } cifex_image_t;
 
+typedef struct cifex_metadata_pair cifex_metadata_pair_t;
+
 /// A key-value metadata pair, stored as a linked list.
 typedef struct cifex_metadata_pair
 {
-   uint8_t *key;
+   char *key;
    size_t key_len;
 
-   uint8_t *value;
+   char *value;
    size_t value_len;
 
    /// If not `NULL`, points to the next metadata field.
-   struct cifex_matadata_pair *next;
+   cifex_metadata_pair_t *next;
+   cifex_metadata_pair_t *prev;
 } cifex_metadata_pair_t;
 
 /// CIF-specific image information.
 typedef struct cifex_image_info
 {
+   /// The allocator that was used for populating the image info.
+   cifex_allocator_t *allocator;
+
+   /// Format version.
+   uint32_t version;
+
    /// Format flags.
    ///
    /// Must contain `cifex_flag_polish`.
@@ -162,6 +186,7 @@ typedef struct cifex_image_info
 
    /// Metadata pairs.
    cifex_metadata_pair_t *metadata;
+   cifex_metadata_pair_t *metadata_last;
 } cifex_image_info_t;
 
 /// Calculates the amount of storage needed to store the given image's data.
@@ -188,9 +213,15 @@ cifex_alloc_image(
 
 /// Frees the image's data.
 ///
-/// Calling this on an already freed image is safe.
+/// It is safe to call this on an already freed image.
 void
 cifex_free_image(cifex_image_t *image);
+
+/// Frees image info.
+///
+/// It is safe to call this on already freed image info.
+void
+cifex_free_image_info(cifex_image_info_t *image_info);
 
 /* --------------
    Image decoding
@@ -202,13 +233,23 @@ typedef struct cifex_decode_config
    /// The allocator used for memory allocations.
    cifex_allocator_t *allocator;
    cifex_reader_t *reader;
+
+   /// Pass `false` to not load the metadata fields into the image info.
+   ///
+   /// Default: `true`
+   bool load_metadata;
 } cifex_decode_config_t;
+
+cifex_decode_config_t
+cifex_default_decode_config(cifex_allocator_t *allocator, cifex_reader_t *reader);
 
 /// The result of decoding an image.
 typedef struct cifex_decode_result
 {
    cifex_result_t result;
-   /// If `result == cifex_syntax_error`, populated with the line on which the error occured.
+   /// Populated with the byte on which the error occured, or `0` if not applicable.
+   size_t position;
+   /// Populated with the line on which the error occured, or `0` if not applicable.
    size_t line;
 } cifex_decode_result_t;
 

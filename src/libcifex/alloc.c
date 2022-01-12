@@ -16,10 +16,9 @@ cifex_alloc(cifex_allocator_t *allocator, size_t size)
 void
 cifex_free(cifex_allocator_t *allocator, void **varptr)
 {
-   cx_ensure(allocator != NULL, "allocator must not be NULL");
    cx_ensure(varptr != NULL, "the pointer to the variable must not be NULL");
 
-   if (*varptr != NULL) {
+   if (allocator != NULL && *varptr != NULL) {
       allocator->free(allocator, *varptr);
       *varptr = NULL;
    }

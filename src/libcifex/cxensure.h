@@ -7,16 +7,16 @@
 
 /// `assert` but also lets you pass in an error message.
 static inline void
-cx_ensure__impl(bool cond, const char *message, const char *expr)
+cx_ensure__impl(bool cond, const char *filename, size_t line, const char *message, const char *expr)
 {
 #ifndef NDEBUG
    if (!cond) {
-      fprintf(stderr, "assertion failed: %s\n  at: %s\n", message, expr);
+      fprintf(stderr, "\nassertion failed: %s\n  at %s:%lu: %s\n\n", message, filename, line, expr);
       abort();
    }
 #endif
 }
 
-#define cx_ensure(cond, message) cx_ensure__impl(cond, message, #cond)
+#define cx_ensure(cond, message) cx_ensure__impl(cond, __FILE__, __LINE__, message, #cond)
 
 #endif

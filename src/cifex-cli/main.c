@@ -27,15 +27,31 @@ main(void)
       (cifex_decode_config_t){
          .allocator = &allocator,
          .reader = &reader,
+         .load_metadata = true,
       },
       &image,
       &image_info);
-   if (decode_result.result == cifex_syntax_error) {
-      fprintf(stderr, "syntax error at line %lu", decode_result.line);
+   if (decode_result.result != cifex_ok) {
+      fprintf(
+         stderr,
+         "line %lu (byte %lu): %s\n",
+         decode_result.line,
+         decode_result.position,
+         cifex_result_to_string(decode_result.result));
       exit(cifex_syntax_error);
    }
 
+   printf("format version: %i\n", image_info.version);
+   printf("dimensions: %u×%u\tchannels: %u\n", image.width, image.height, image.channels);
+
+   printf("metadata:\n");
+   cifex_metadata_pair_t *pair = image_info.metadata;
+   for (; pair != NULL; pair = pair->next) {
+      printf("%s\t | %s\n", pair->key, pair->value);
+   }
+
    cifex_free_image(&image);
+   cifex_free_image_info(&image_info);
    cifex_fclose(&reader);
 
    return result;

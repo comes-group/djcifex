@@ -31,6 +31,7 @@ cifex_alloc_image(
          return cifex_out_of_memory;
       }
       image->allocator = allocator;
+      image->data = data;
    }
    image->width = width;
    image->height = height;
@@ -47,8 +48,20 @@ cifex_free_image(cifex_image_t *image)
    image->width = 0;
    image->height = 0;
    image->channels = 0;
-   if (image->allocator != NULL) {
-      cifex_free(image->allocator, (void **)&image->data);
-      image->allocator = NULL;
+   cifex_free(image->allocator, (void **)&image->data);
+   image->allocator = NULL;
+}
+
+void
+cifex_free_image_info(cifex_image_info_t *image_info)
+{
+   cifex_metadata_pair_t *node = image_info->metadata_last;
+   while (node != NULL) {
+      cifex_metadata_pair_t *to_free = node;
+      node = node->prev;
+      cifex_free(image_info->allocator, (void **)&to_free->key);
+      cifex_free(image_info->allocator, (void **)&to_free->value);
+      cifex_free(image_info->allocator, (void **)&to_free);
    }
+   image_info->allocator = NULL;
 }
