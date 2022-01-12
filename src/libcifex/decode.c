@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "cxcompilers.h"
 #include "cxensure.h"
 #include "cxstrings.h"
 
@@ -52,12 +53,12 @@ typedef struct cx_decoder
 } cx_decoder_t;
 
 #define cx_dec_try(expr) \
-   if (!(expr)) { \
-      return cifex_syntax_error; \
-   }
+ if (!(expr)) { \
+  return cifex_syntax_error; \
+ }
 
 // Matches a literal string.
-static inline bool
+static cx_inline bool
 cx_dec_match_string(cx_decoder_t *dec, size_t string_len, const char *string)
 {
    if (dec->position + string_len >= dec->buffer_len) {
@@ -73,7 +74,7 @@ cx_dec_match_string(cx_decoder_t *dec, size_t string_len, const char *string)
 }
 
 // Matches a single character.
-static inline bool
+static cx_inline bool
 cx_dec_match(cx_decoder_t *dec, uint8_t byte)
 {
    if (dec->position + 1 >= dec->buffer_len) {
@@ -87,7 +88,7 @@ cx_dec_match(cx_decoder_t *dec, uint8_t byte)
 }
 
 // Matches one or more of the provided character.
-static inline bool
+static cx_inline bool
 cx_dec_match_one_or_more(cx_decoder_t *dec, uint8_t byte)
 {
    bool matched = false;
@@ -99,21 +100,21 @@ cx_dec_match_one_or_more(cx_decoder_t *dec, uint8_t byte)
 }
 
 // Matches white space.
-static inline bool
+static cx_inline bool
 cx_dec_match_ws(cx_decoder_t *dec)
 {
    return cx_dec_match_one_or_more(dec, ' ');
 }
 
 // Matches a line feed.
-static inline bool
+static cx_inline bool
 cx_dec_match_lf(cx_decoder_t *dec)
 {
    return cx_dec_match_one_or_more(dec, '\n');
 }
 
 // Parses the `CIF: polish` flags.
-static inline cifex_result_t
+static cx_inline cifex_result_t
 cx_dec_parse_flags(cx_decoder_t *dec, cifex_flags_t *flags)
 {
    cx_dec_try(cx_dec_match_string(dec, cxstr("CIF:")));
@@ -126,7 +127,7 @@ cx_dec_parse_flags(cx_decoder_t *dec, cifex_flags_t *flags)
 }
 
 // Constructs a decoding error.
-static inline cifex_decode_result_t
+static cx_inline cifex_decode_result_t
 cx_dec_error(cx_decoder_t *dec, cifex_result_t result)
 {
    return (cifex_decode_result_t){

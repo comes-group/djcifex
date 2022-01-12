@@ -5,4 +5,6 @@ AlignAfterOpenBracket: AlwaysBreak
 ColumnLimit: 100
 PointerAlignment: Right
 AlignEscapedNewlines: DontAlign
-
+IndentPPDirectives: AfterHash
+PPIndentWidth: 1
+IndentExternBlock: NoIndent
