@@ -1,13 +1,16 @@
 #include "public/libcifex.h"
 
-#include "ensure.h"
+#include "cxensure.h"
 #include <stdlib.h>
+#include <string.h>
 
 void *
 cifex_alloc(cifex_allocator_t *allocator, size_t size)
 {
    cx_ensure(allocator != NULL, "allocator must not be NULL");
-   return allocator->malloc(allocator, size);
+   void *ptr = allocator->malloc(allocator, size);
+   memset(ptr, 0, size);
+   return ptr;
 }
 
 void

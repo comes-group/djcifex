@@ -13,6 +13,10 @@ typedef enum cifex_result
    cifex_ok,
    /// Ran out of memory while performing the operation.
    cifex_out_of_memory,
+   /// The image file is empty.
+   cifex_empty_image_file,
+   /// A syntax error was found.
+   cifex_syntax_error,
 
    cifex__last_own_result,
 
@@ -57,6 +61,8 @@ typedef struct cifex_allocator
 } cifex_allocator_t;
 
 /// Allocates a memory region using the allocator. Returns `NULL` if no more memory is available.
+///
+/// The memory is cleared with zeroes.
 void *
 cifex_alloc(cifex_allocator_t *allocator, size_t size);
 
@@ -112,6 +118,11 @@ typedef enum cifex_channels
    cifex_rgba = 4,
 } cifex_channels_t;
 
+typedef enum cifex_flags
+{
+   cifex_flag_polish = 0x1,
+} cifex_flags_t;
+
 /// An image.
 typedef struct cifex_image
 {
@@ -127,6 +138,31 @@ typedef struct cifex_image
    /// - for `cifex_rgba`, it's 4 bytes per pixel.
    uint8_t *data;
 } cifex_image_t;
+
+/// A key-value metadata pair, stored as a linked list.
+typedef struct cifex_metadata_pair
+{
+   uint8_t *key;
+   size_t key_len;
+
+   uint8_t *value;
+   size_t value_len;
+
+   /// If not `NULL`, points to the next metadata field.
+   struct cifex_matadata_pair *next;
+} cifex_metadata_pair_t;
+
+/// CIF-specific image information.
+typedef struct cifex_image_info
+{
+   /// Format flags.
+   ///
+   /// Must contain `cifex_flag_polish`.
+   cifex_flags_t flags;
+
+   /// Metadata pairs.
+   cifex_metadata_pair_t *metadata;
+} cifex_image_info_t;
 
 /// Calculates the amount of storage needed to store the given image's data.
 inline size_t
@@ -164,12 +200,25 @@ cifex_free_image(cifex_image_t *image);
 typedef struct cifex_decode_config
 {
    /// The allocator used for memory allocations.
-   cifex_allocator_t allocator;
-   cifex_reader_t reader;
+   cifex_allocator_t *allocator;
+   cifex_reader_t *reader;
 } cifex_decode_config_t;
 
+/// The result of decoding an image.
+typedef struct cifex_decode_result
+{
+   cifex_result_t result;
+   /// If `result == cifex_syntax_error`, populated with the line on which the error occured.
+   size_t line;
+} cifex_decode_result_t;
+
 /// Decodes an image into `out_image`.
-cifex_result_t
-cifex_decode(const cifex_decode_config_t *config, cifex_image_t *out_image);
+///
+/// `out_image_info` can be NULL if CIF-specific metadata isn't needed.
+cifex_decode_result_t
+cifex_decode(
+   cifex_decode_config_t config,
+   cifex_image_t *out_image,
+   cifex_image_info_t *out_image_info);
 
 #endif

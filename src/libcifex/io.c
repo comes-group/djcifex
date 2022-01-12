@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "ensure.h"
+#include "cxensure.h"
 
 static size_t
 cx_stdio_fread(cifex_reader_t *reader, void *out, size_t n_bytes)

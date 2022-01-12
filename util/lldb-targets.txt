@@ -1,0 +1,1 @@
+target module add build/src/libcifex/libcifex.so

@@ -2,6 +2,12 @@
 
 #include <string.h>
 
+extern inline cifex_result_t
+cifex_errno_result(int err);
+
+extern inline int
+cifex_get_errno(cifex_result_t result);
+
 static const char *cx_result_strings[] = {
    [cifex_ok] = "the operation completed successfully",
    [cifex_out_of_memory] = "ran out of memory while performing the operation",

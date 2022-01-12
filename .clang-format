@@ -4,4 +4,5 @@ ContinuationIndentWidth: 3
 AlignAfterOpenBracket: AlwaysBreak
 ColumnLimit: 100
 PointerAlignment: Right
+AlignEscapedNewlines: DontAlign
 

@@ -1,6 +1,6 @@
 #include "public/libcifex.h"
 
-#include "ensure.h"
+#include "cxensure.h"
 
 extern inline size_t
 cifex_image_storage_size(uint32_t width, uint32_t height, cifex_channels_t channels);
@@ -47,6 +47,8 @@ cifex_free_image(cifex_image_t *image)
    image->width = 0;
    image->height = 0;
    image->channels = 0;
-   cifex_free(image->allocator, (void **)&image->data);
-   image->allocator = NULL;
+   if (image->allocator != NULL) {
+      cifex_free(image->allocator, (void **)&image->data);
+      image->allocator = NULL;
+   }
 }
