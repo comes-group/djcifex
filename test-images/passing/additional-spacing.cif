@@ -1,0 +1,10 @@
+CIF:      polish
+
+WERSJA    jeden
+ROZMIAR   szerokość: dwa,  wysokość: dwa,  bitów_na_piksel:  dwadzieścia  cztery
+METADANE  czesc 123
+
+zero;    zero;    zero
+jeden;   zero;    jeden
+dwa;     dwa;     dwa
+cztery;  cztery;  cztery
