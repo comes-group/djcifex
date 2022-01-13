@@ -16,6 +16,7 @@ static const char *cx_result_strings[] = {
    [cifex_invalid_version] = "invalid format version (version cannot be zero)",
    [cifex_unsupported_version] = "unsupported format version. is the decoder too old?",
    [cifex_invalid_bpp] = "invalid bits per pixel (must be 24 for RGBA or 32 for RGB)",
+   [cifex_channel_out_of_range] = "channel is out of range (must be in 0..255)",
 };
 
 static const char *cx_invalid_result = "<invalid result value>";

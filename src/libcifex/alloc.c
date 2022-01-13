@@ -14,13 +14,10 @@ cifex_alloc(cifex_allocator_t *allocator, size_t size)
 }
 
 void
-cifex_free(cifex_allocator_t *allocator, void **varptr)
+cifex_free(cifex_allocator_t *allocator, void *ptr)
 {
-   cx_ensure(varptr != NULL, "the pointer to the variable must not be NULL");
-
-   if (allocator != NULL && *varptr != NULL) {
-      allocator->free(allocator, *varptr);
-      *varptr = NULL;
+   if (allocator != NULL && ptr != NULL) {
+      allocator->free(allocator, ptr);
    }
 }
 
@@ -39,7 +36,7 @@ cx_libc_free_adapter(cifex_allocator_t *allocator, void *ptr)
 }
 
 cifex_allocator_t
-cifex_libc_allocator()
+cifex_libc_allocator(void)
 {
    return (cifex_allocator_t){
       .malloc = cx_libc_malloc_adapter,

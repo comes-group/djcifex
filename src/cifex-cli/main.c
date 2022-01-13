@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "vendor/stb_image_write.h"
+
 static void
 cxc_try(cifex_result_t result)
 {
@@ -13,7 +16,7 @@ cxc_try(cifex_result_t result)
 }
 
 int
-main(void)
+main(int argc, char *argv[])
 {
    cifex_allocator_t allocator = cifex_libc_allocator();
    cifex_reader_t reader = { 0 };
@@ -21,7 +24,15 @@ main(void)
    cifex_image_info_t image_info = { 0 };
    cifex_result_t result = cifex_ok;
 
-   cxc_try(cifex_fopen(&reader, "images/test.cif"));
+   if (argc != 3) {
+      fprintf(stderr, "usage: cifex <input.cif> <output>\n");
+      return -1;
+   }
+
+   char *input_file_name = argv[1];
+   char *output_file_name = argv[2];
+
+   cxc_try(cifex_fopen(&reader, input_file_name));
 
    cifex_decode_result_t decode_result = cifex_decode(
       (cifex_decode_config_t){
@@ -49,6 +60,15 @@ main(void)
    for (; pair != NULL; pair = pair->next) {
       printf("%s\t | %s\n", pair->key, pair->value);
    }
+
+   printf("writing PNG to %s\n", output_file_name);
+   stbi_write_png(
+      output_file_name,
+      image.width,
+      image.height,
+      image.channels,
+      image.data,
+      image.width * image.channels);
 
    cifex_free_image(&image);
    cifex_free_image_info(&image_info);

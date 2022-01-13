@@ -24,7 +24,7 @@ cifex_alloc_image(
 
    size_t old_storage_size = cifex_image_storage_size(image->width, image->height, image->channels);
    if (new_storage_size > old_storage_size) {
-      cifex_free(image->allocator, (void **)&image->data);
+      cifex_free(image->allocator, image->data);
       uint8_t *data = cifex_alloc(allocator, new_storage_size);
       if (data == NULL) {
          cifex_free_image(image);
@@ -48,7 +48,8 @@ cifex_free_image(cifex_image_t *image)
    image->width = 0;
    image->height = 0;
    image->channels = 0;
-   cifex_free(image->allocator, (void **)&image->data);
+   cifex_free(image->allocator, image->data);
+   image->data = NULL;
    image->allocator = NULL;
 }
 
@@ -59,9 +60,9 @@ cifex_free_image_info(cifex_image_info_t *image_info)
    while (node != NULL) {
       cifex_metadata_pair_t *to_free = node;
       node = node->prev;
-      cifex_free(image_info->allocator, (void **)&to_free->key);
-      cifex_free(image_info->allocator, (void **)&to_free->value);
-      cifex_free(image_info->allocator, (void **)&to_free);
+      cifex_free(image_info->allocator, to_free->key);
+      cifex_free(image_info->allocator, to_free->value);
+      cifex_free(image_info->allocator, to_free);
    }
    image_info->allocator = NULL;
 }

@@ -32,6 +32,8 @@ typedef enum cifex_result
    cifex_unsupported_version,
    /// This number of bits per pixel is not supported.
    cifex_invalid_bpp,
+   /// A channel's value was out of the 0..255 range.
+   cifex_channel_out_of_range,
 
    cifex__last_own_result,
 
@@ -81,14 +83,14 @@ typedef struct cifex_allocator
 void *
 cifex_alloc(cifex_allocator_t *allocator, size_t size);
 
-/// Deallocates a memory region using the allocator. `ptr` must point to a variable that holds a
-/// pointer to the allocation. This variable is `NULL`ified by this function.
+/// Deallocates a memory region using the allocator. `ptr` must point to an allocation made by
+/// the allocator.
 void
-cifex_free(cifex_allocator_t *allocator, void **varptr);
+cifex_free(cifex_allocator_t *allocator, void *ptr);
 
 /// Returns the libc allocator.
 cifex_allocator_t
-cifex_libc_allocator();
+cifex_libc_allocator(void);
 
 /* --------------
    I/O facilities

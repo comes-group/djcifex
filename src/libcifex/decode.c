@@ -61,7 +61,7 @@ typedef struct cx_decoder
 static cx_inline bool
 cx_dec_match_string(cx_decoder_t *dec, size_t string_len, const char *string)
 {
-   if (dec->position + string_len >= dec->buffer_len) {
+   if (dec->position + string_len - 1 >= dec->buffer_len) {
       return false;
    }
    for (size_t i = 0; i < string_len; ++i) {
@@ -77,7 +77,7 @@ cx_dec_match_string(cx_decoder_t *dec, size_t string_len, const char *string)
 static cx_inline bool
 cx_dec_match(cx_decoder_t *dec, uint8_t byte)
 {
-   if (dec->position + 1 >= dec->buffer_len) {
+   if (dec->position >= dec->buffer_len) {
       return false;
    }
    if (dec->buffer[dec->position] != byte) {
@@ -132,6 +132,33 @@ cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
       return true;
    }
 
+   // Check for hundreds.
+   bool hundreds = true;
+   if (cx_dec_match_string(dec, cxstr("sto"))) {
+      *out_number += 100;
+   } else if (cx_dec_match_string(dec, cxstr("dwieście"))) {
+      *out_number += 200;
+   } else if (cx_dec_match_string(dec, cxstr("trzysta"))) {
+      *out_number += 300;
+   } else if (cx_dec_match_string(dec, cxstr("czterysta"))) {
+      *out_number += 400;
+   } else if (cx_dec_match_string(dec, cxstr("pięćset"))) {
+      *out_number += 500;
+   } else if (cx_dec_match_string(dec, cxstr("sześćset"))) {
+      *out_number += 600;
+   } else if (cx_dec_match_string(dec, cxstr("siedemset"))) {
+      *out_number += 700;
+   } else if (cx_dec_match_string(dec, cxstr("osiemset"))) {
+      *out_number += 800;
+   } else if (cx_dec_match_string(dec, cxstr("dziewięćset"))) {
+      *out_number += 900;
+   } else {
+      hundreds = false;
+   }
+   if (hundreds && !cx_dec_match_ws(dec)) {
+      return true;
+   }
+
    // Check for ten and n-teens.
    bool nteens = true;
    if (cx_dec_match_string(dec, cxstr("dziesięć"))) {
@@ -159,33 +186,6 @@ cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
    }
    // If a match was found, there can't be any words afterwards.
    if (nteens) {
-      return true;
-   }
-
-   // Check for hundreds.
-   bool hundreds = true;
-   if (cx_dec_match_string(dec, cxstr("sto"))) {
-      *out_number += 100;
-   } else if (cx_dec_match_string(dec, cxstr("dwieście"))) {
-      *out_number += 200;
-   } else if (cx_dec_match_string(dec, cxstr("trzysta"))) {
-      *out_number += 300;
-   } else if (cx_dec_match_string(dec, cxstr("czterysta"))) {
-      *out_number += 400;
-   } else if (cx_dec_match_string(dec, cxstr("pięćset"))) {
-      *out_number += 500;
-   } else if (cx_dec_match_string(dec, cxstr("sześćset"))) {
-      *out_number += 600;
-   } else if (cx_dec_match_string(dec, cxstr("siedemset"))) {
-      *out_number += 700;
-   } else if (cx_dec_match_string(dec, cxstr("osiemset"))) {
-      *out_number += 800;
-   } else if (cx_dec_match_string(dec, cxstr("dziewięćset"))) {
-      *out_number += 900;
-   } else {
-      hundreds = false;
-   }
-   if (hundreds && !cx_dec_match_ws(dec)) {
       return true;
    }
 
@@ -418,6 +418,99 @@ cx_dec_parse_metadata(
    return cifex_ok;
 }
 
+// Parses all the pixels in an image. The amount of pixels to be parsed is taken from the
+// `out_image`.
+static cx_inline cifex_result_t
+cx_dec_parse_pixels(cx_decoder_t *dec, cifex_image_t *inout_image, size_t *out_error_line)
+{
+   size_t syntax_error = 0;
+   size_t range_error = 0;
+
+   switch (inout_image->channels) {
+      case cifex_rgb:
+         for (uint32_t y = 0; y < inout_image->height; ++y) {
+            for (uint32_t x = 0; x < inout_image->width; ++x) {
+               size_t offset =
+                  ((size_t)x + (size_t)y * (size_t)inout_image->width) * inout_image->channels;
+
+               // Parse the pixel.
+               uint32_t r, g, b;
+               size_t syntax = 0;
+               syntax |= !cx_dec_parse_number(dec, &r);
+               syntax |= !cx_dec_match(dec, ';');
+               syntax |= !cx_dec_match_ws(dec);
+               syntax |= !cx_dec_parse_number(dec, &g);
+               syntax |= !cx_dec_match(dec, ';');
+               syntax |= !cx_dec_match_ws(dec);
+               syntax |= !cx_dec_parse_number(dec, &b);
+               syntax |= !cx_dec_match_lf(dec);
+               if (syntax != 0) {
+                  syntax_error = dec->line;
+               }
+
+               // Check if all channels are in the correct range.
+               if (r > 255 || g > 255 || b > 255) {
+                  range_error = dec->line;
+               }
+
+               // Set the pixel.
+               inout_image->data[offset] = r;
+               inout_image->data[offset + 1] = g;
+               inout_image->data[offset + 2] = b;
+            }
+         }
+         break;
+      case cifex_rgba:
+         for (uint32_t y = 0; y < inout_image->height; ++y) {
+            for (uint32_t x = 0; x < inout_image->width; ++x) {
+               size_t offset =
+                  ((size_t)x + (size_t)y * (size_t)inout_image->width) * inout_image->channels;
+
+               // Parse the pixel.
+               uint32_t r, g, b, a;
+               size_t syntax = 0;
+               syntax += !cx_dec_parse_number(dec, &r);
+               syntax += !cx_dec_match(dec, ';');
+               syntax += !cx_dec_match_ws(dec);
+               syntax += !cx_dec_parse_number(dec, &g);
+               syntax += !cx_dec_match(dec, ';');
+               syntax += !cx_dec_match_ws(dec);
+               syntax += !cx_dec_parse_number(dec, &b);
+               syntax += !cx_dec_match(dec, ';');
+               syntax += !cx_dec_match_ws(dec);
+               syntax += !cx_dec_parse_number(dec, &a);
+               syntax += !cx_dec_match_lf(dec);
+               if (syntax != 0) {
+                  syntax_error = dec->line;
+               }
+
+               // Check if all channels are in the correct range.
+               if (r > 255 || g > 255 || b > 255 || a > 255) {
+                  range_error = dec->line;
+               }
+
+               // Set the pixel.
+               inout_image->data[offset] = r;
+               inout_image->data[offset + 1] = g;
+               inout_image->data[offset + 2] = b;
+               inout_image->data[offset + 3] = a;
+            }
+         }
+         break;
+   }
+
+   if (syntax_error != 0) {
+      *out_error_line = syntax_error;
+      return cifex_syntax_error;
+   }
+   if (range_error > 0) {
+      *out_error_line = range_error;
+      return cifex_channel_out_of_range;
+   }
+
+   return cifex_ok;
+}
+
 // Constructs a decoding error.
 static cx_inline cifex_decode_result_t
 cx_dec_error(const cx_decoder_t *dec, cifex_result_t result)
@@ -486,6 +579,12 @@ cifex_decode(
       goto err;
    }
 
+   size_t error_line = 0;
+   if ((result = cx_dec_parse_pixels(&dec, out_image, &error_line)) != cifex_ok) {
+      dec.line = error_line;
+      goto err;
+   }
+
    if (out_image_info != NULL) {
       *out_image_info = image_info;
    }
@@ -493,10 +592,10 @@ cifex_decode(
    goto ok;
 
 err:
-   cifex_free(config.allocator, (void **)&dec.buffer);
+   cifex_free(config.allocator, dec.buffer);
    return cx_dec_error(&dec, result);
 
 ok:
-   cifex_free(config.allocator, (void **)&dec.buffer);
+   cifex_free(config.allocator, dec.buffer);
    return (cifex_decode_result_t){ .result = cifex_ok, .position = 0, .line = 0 };
 }
