@@ -469,17 +469,17 @@ cx_dec_parse_pixels(cx_decoder_t *dec, cifex_image_t *inout_image, size_t *out_e
                // Parse the pixel.
                uint32_t r, g, b, a;
                size_t syntax = 0;
-               syntax += !cx_dec_parse_number(dec, &r);
-               syntax += !cx_dec_match(dec, ';');
-               syntax += !cx_dec_match_ws(dec);
-               syntax += !cx_dec_parse_number(dec, &g);
-               syntax += !cx_dec_match(dec, ';');
-               syntax += !cx_dec_match_ws(dec);
-               syntax += !cx_dec_parse_number(dec, &b);
-               syntax += !cx_dec_match(dec, ';');
-               syntax += !cx_dec_match_ws(dec);
-               syntax += !cx_dec_parse_number(dec, &a);
-               syntax += !cx_dec_match_lf(dec);
+               syntax |= !cx_dec_parse_number(dec, &r);
+               syntax |= !cx_dec_match(dec, ';');
+               syntax |= !cx_dec_match_ws(dec);
+               syntax |= !cx_dec_parse_number(dec, &g);
+               syntax |= !cx_dec_match(dec, ';');
+               syntax |= !cx_dec_match_ws(dec);
+               syntax |= !cx_dec_parse_number(dec, &b);
+               syntax |= !cx_dec_match(dec, ';');
+               syntax |= !cx_dec_match_ws(dec);
+               syntax |= !cx_dec_parse_number(dec, &a);
+               syntax |= !cx_dec_match_lf(dec);
                if (syntax != 0) {
                   syntax_error = dec->line;
                }
@@ -532,11 +532,15 @@ cifex_decode(
    cx_ensure(config.reader != NULL, "decoding reader cannot be NULL");
    cx_ensure(out_image != NULL, "output image cannot be NULL");
 
+   cifex_result_t result;
+
    // Reading all the data at once is faster than having to seek around and all that.
    // It also lets us seek throughout the whole file however we see fit.
-   uint8_t *buffer;
-   size_t buffer_len;
-   cx_read_all(config.reader, config.allocator, &buffer, &buffer_len);
+   uint8_t *buffer = NULL;
+   size_t buffer_len = 0;
+   if ((result = cx_read_all(config.reader, config.allocator, &buffer, &buffer_len)) != cifex_ok) {
+      return (cifex_decode_result_t){ .result = result, .line = 0, .position = 0 };
+   }
 
    cx_decoder_t dec = {
       .buffer = buffer,
@@ -552,7 +556,6 @@ cifex_decode(
       .metadata = NULL,
    };
 
-   cifex_result_t result;
    if ((result = cx_dec_parse_flags(&dec, &image_info.flags)) != cifex_ok) {
       goto err;
    }
