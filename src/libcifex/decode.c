@@ -435,7 +435,7 @@ cx_dec_parse_pixels(cx_decoder_t *dec, cifex_image_t *inout_image, size_t *out_e
 
                // Parse the pixel.
                uint32_t r, g, b;
-               size_t syntax = 0;
+               bool syntax = false;
                syntax |= !cx_dec_parse_number(dec, &r);
                syntax |= !cx_dec_match(dec, ';');
                syntax |= !cx_dec_match_ws(dec);
@@ -468,7 +468,7 @@ cx_dec_parse_pixels(cx_decoder_t *dec, cifex_image_t *inout_image, size_t *out_e
 
                // Parse the pixel.
                uint32_t r, g, b, a;
-               size_t syntax = 0;
+               bool syntax = false;
                syntax |= !cx_dec_parse_number(dec, &r);
                syntax |= !cx_dec_match(dec, ';');
                syntax |= !cx_dec_match_ws(dec);
@@ -480,7 +480,7 @@ cx_dec_parse_pixels(cx_decoder_t *dec, cifex_image_t *inout_image, size_t *out_e
                syntax |= !cx_dec_match_ws(dec);
                syntax |= !cx_dec_parse_number(dec, &a);
                syntax |= !cx_dec_match_lf(dec);
-               if (syntax != 0) {
+               if (syntax) {
                   syntax_error = dec->line;
                }
 
