@@ -6,6 +6,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "vendor/stb_image_write.h"
 
+#include "argparse.c"
+
 static void
 cxc_try(cifex_result_t result)
 {
@@ -18,19 +20,35 @@ cxc_try(cifex_result_t result)
 int
 main(int argc, char *argv[])
 {
+   cxc_arg_parser_t argp = cxc_init_arg_parser(argc, argv);
+   char *input_file_name = NULL, *output_file_name = NULL;
+   bool dry_run = false;
+
+   char **positional_args[] = {
+      &input_file_name,
+      &output_file_name,
+   };
+   while (cxc_has_args(&argp)) {
+      cxc_positional_args(
+         &argp, sizeof(positional_args) / sizeof(positional_args[0]), positional_args);
+      cxc_named_arg(&argp, 0, "dry-run", cxc_bool, &dry_run);
+      cxc_finish_arg(&argp);
+   }
+   cxc_free_arg_parser(&argp);
+
+   if (input_file_name == NULL || output_file_name == NULL) {
+      fprintf(
+         stderr,
+         "error: no input or output filename provided.\n"
+         "usage: cifex <input-file.cif> <output-file.png>\n");
+      exit(-1);
+   }
+
    cifex_allocator_t allocator = cifex_libc_allocator();
    cifex_reader_t reader = { 0 };
    cifex_image_t image = { 0 };
    cifex_image_info_t image_info = { 0 };
    cifex_result_t result = cifex_ok;
-
-   if (argc != 3) {
-      fprintf(stderr, "usage: cifex <input.cif> <output>\n");
-      return -1;
-   }
-
-   char *input_file_name = argv[1];
-   char *output_file_name = argv[2];
 
    cxc_try(cifex_fopen(&reader, input_file_name));
 
@@ -61,14 +79,16 @@ main(int argc, char *argv[])
       printf("%s\t | %s\n", pair->key, pair->value);
    }
 
-   printf("writing PNG to %s\n", output_file_name);
-   stbi_write_png(
-      output_file_name,
-      image.width,
-      image.height,
-      image.channels,
-      image.data,
-      image.width * image.channels);
+   if (!dry_run) {
+      printf("writing PNG to %s\n", output_file_name);
+      stbi_write_png(
+         output_file_name,
+         image.width,
+         image.height,
+         image.channels,
+         image.data,
+         image.width * image.channels);
+   }
 
    cifex_free_image(&image);
    cifex_free_image_info(&image_info);
