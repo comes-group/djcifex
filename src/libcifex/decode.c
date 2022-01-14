@@ -383,32 +383,10 @@ cx_dec_parse_metadata(
 
    if (allocator != NULL) {
       while (cx_dec_parse_metadata_field(dec, &key, &key_len, &value, &value_len) == cifex_ok) {
-         char *key_buffer = cifex_alloc(allocator, key_len + 1);
-         if (key_buffer == NULL) {
-            return cifex_out_of_memory;
-         }
-         memcpy(key_buffer, key, key_len);
-
-         char *value_buffer = cifex_alloc(allocator, value_len + 1);
-         if (value_buffer == NULL) {
-            return cifex_out_of_memory;
-         }
-         memcpy(value_buffer, value, value_len);
-
-         cifex_metadata_pair_t *node = cifex_alloc(allocator, sizeof(cifex_metadata_pair_t));
-         node->key = key_buffer;
-         node->key_len = key_len;
-         node->value = value_buffer;
-         node->value_len = value_len;
-         node->next = NULL;
-         node->prev = out_image_info->metadata_last;
-         if (out_image_info->metadata == NULL) {
-            out_image_info->metadata = node;
-            out_image_info->metadata_last = node;
-         } else {
-            out_image_info->metadata_last->next = node;
-            out_image_info->metadata_last = node;
-         }
+         // Casting through the signedness here is safe because in the end it's all just characters.
+         // I just use `uint8_t` in the decoder because `char`s stink, but that's what string
+         // literals are so storing them in metadata that way makes more sense.
+         cifex_append_metadata_len(out_image_info, key_len, (char *)key, value_len, (char *)value);
       }
    } else {
       while (cx_dec_parse_metadata_field(dec, &key, &key_len, &value, &value_len) == cifex_ok)

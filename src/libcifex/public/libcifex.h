@@ -34,6 +34,10 @@ typedef enum cifex_result
    cifex_invalid_bpp,
    /// A channel's value was out of the 0..255 range.
    cifex_channel_out_of_range,
+   /// The key provided to `cifex_append_metadata` was empty.
+   cifex_empty_metadata_key,
+   /// A language flag was not provided.
+   cifex_missing_language,
 
    cifex__last_own_result,
 
@@ -96,33 +100,52 @@ cifex_libc_allocator(void);
    I/O facilities
    -------------- */
 
-struct cifex_reader;
+typedef struct cifex_reader cifex_reader_t;
 
-typedef size_t (*cifex_fread_fn)(struct cifex_reader *reader, void *out, size_t n_bytes);
+typedef size_t (*cifex_fread_fn)(cifex_reader_t *reader, void *out, size_t n_bytes);
 
-typedef int (*cifex_fseek_fn)(struct cifex_reader *reader, long offset, int whence);
+typedef int (*cifex_fseek_fn)(cifex_reader_t *reader, long offset, int whence);
 
-typedef long (*cifex_ftell_fn)(struct cifex_reader *reader);
+typedef long (*cifex_ftell_fn)(cifex_reader_t *reader);
 
 /// A file reader.
 ///
 /// The functions in this reader are expected to exhibit behavior similar to that of libc functions,
-/// that is, they shoukd use errno and sentinel values for error handling.
-typedef struct cifex_reader
+/// that is, they should use errno and sentinel values for error handling.
+struct cifex_reader
 {
    void *user_data;
    cifex_fread_fn read;
    cifex_fseek_fn seek;
    cifex_ftell_fn tell;
-} cifex_reader_t;
+};
+
+typedef struct cifex_writer cifex_writer_t;
+
+typedef size_t (*cifex_fwrite_fn)(cifex_writer_t *writer, const void *in, size_t n_bytes);
+
+/// A file writer.
+struct cifex_writer
+{
+   void *user_data;
+   cifex_fwrite_fn write;
+};
 
 /// `fopen`s a file reader.
 cifex_result_t
-cifex_fopen(cifex_reader_t *reader, const char *filename);
+cifex_fopen_read(cifex_reader_t *reader, const char *filename);
 
-/// `fclose`s a file reader. This must only be used on readers opened with `cifex_reader_fopen`.
+/// `fclose`s a file reader. This must only be used on readers opened with `cifex_fopen_read`.
 cifex_result_t
-cifex_fclose(cifex_reader_t *reader);
+cifex_fclose_read(cifex_reader_t *reader);
+
+/// `fopens` a file writer.
+cifex_result_t
+cifex_fopen_write(cifex_writer_t *writer, const char *filename);
+
+/// `fclose`s a file writer. This must only be used on writers opened with `cifex_fopen_write`.
+cifex_result_t
+cifex_fclose_write(cifex_writer_t *writer);
 
 /* --------------
    Image handling
@@ -161,11 +184,8 @@ typedef struct cifex_metadata_pair cifex_metadata_pair_t;
 /// A key-value metadata pair, stored as a linked list.
 typedef struct cifex_metadata_pair
 {
-   char *key;
-   size_t key_len;
-
-   char *value;
-   size_t value_len;
+   char *key, *value;
+   size_t key_len, value_len;
 
    /// If not `NULL`, points to the next metadata field.
    cifex_metadata_pair_t *next;
@@ -219,6 +239,27 @@ cifex_alloc_image(
 void
 cifex_free_image(cifex_image_t *image);
 
+/// Populates the image info with default values, as well as the given allocator.
+void
+cifex_init_image_info(cifex_image_info_t *image_info, cifex_allocator_t *allocator);
+
+/// Appends a key-value metadata pair onto the image info's metadata chain.
+///
+/// This copies the `key` and `value` strings into new buffers allocated with the image info's
+/// allocator.
+cifex_result_t
+cifex_append_metadata_len(
+   cifex_image_info_t *image_info,
+   size_t key_len,
+   const char *key,
+   size_t value_len,
+   const char *value);
+
+/// Same as `cifex_append_metadata_len`, but calculates the string lengths using `strlen`.
+/// Consequently, the provided strings must be null-terminated.
+cifex_result_t
+cifex_append_metadata(cifex_image_info_t *image_info, const char *key, const char *value);
+
 /// Frees image info.
 ///
 /// It is safe to call this on already freed image info.
@@ -263,5 +304,22 @@ cifex_decode(
    cifex_decode_config_t config,
    cifex_image_t *out_image,
    cifex_image_info_t *out_image_info);
+
+/* --------------
+   Image encoding
+   -------------- */
+
+/// Encodes an image into the given writer using a canonical representation.
+/// This canonical representation uses the minimum possible amount of space while still remaining
+/// valid CIF.
+///
+/// `image_info` can be NULL, in which case default settings will be used together with a
+/// single metadata pair:
+///  - `encoder`: `DJ Cifex`
+cifex_result_t
+cifex_encode(
+   cifex_writer_t *writer,
+   const cifex_image_t *image,
+   const cifex_image_info_t *image_info);
 
 #endif

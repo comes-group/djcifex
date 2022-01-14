@@ -11,7 +11,7 @@ cx_stdio_fread(cifex_reader_t *reader, void *out, size_t n_bytes)
    cx_ensure(reader->user_data != NULL, "attempt to read from closed reader");
 
    FILE *file = reader->user_data;
-   return fread(out, n_bytes, 1, file);
+   return fread(out, 1, n_bytes, file);
 }
 
 static int
@@ -33,7 +33,7 @@ cx_stdio_ftell(cifex_reader_t *reader)
 }
 
 cifex_result_t
-cifex_fopen(cifex_reader_t *reader, const char *filename)
+cifex_fopen_read(cifex_reader_t *reader, const char *filename)
 {
    cx_ensure(reader != NULL, "reader must not be NULL");
 
@@ -52,8 +52,35 @@ cifex_fopen(cifex_reader_t *reader, const char *filename)
    return cifex_ok;
 }
 
+static size_t
+cx_stdio_fwrite(cifex_writer_t *writer, const void *in, size_t n_bytes)
+{
+   cx_ensure(writer->user_data != NULL, "attempt to write to a closed writer");
+
+   FILE *file = writer->user_data;
+   return fwrite(in, 1, n_bytes, file);
+}
+
 cifex_result_t
-cifex_fclose(cifex_reader_t *reader)
+cifex_fopen_write(cifex_writer_t *writer, const char *filename)
+{
+   cx_ensure(writer != NULL, "writer must not be NULL");
+
+   FILE *file = fopen(filename, "wb");
+   if (file == NULL) {
+      return cifex_errno_result(errno);
+   }
+
+   *writer = (cifex_writer_t){
+      .user_data = file,
+      .write = cx_stdio_fwrite,
+   };
+
+   return cifex_ok;
+}
+
+cifex_result_t
+cifex_fclose_read(cifex_reader_t *reader)
 {
    cx_ensure(reader != NULL, "reader must not be NULL");
    cx_ensure(reader->user_data != NULL, "attempt to close an already closed reader");
