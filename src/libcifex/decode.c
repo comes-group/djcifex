@@ -7,6 +7,7 @@
 
 #include "cxcompilers.h"
 #include "cxensure.h"
+#include "cxstrconsts.h"
 #include "cxstrings.h"
 
 #define CX_MAX_PATTERN_LEN 32
@@ -113,6 +114,19 @@ cx_dec_match_lf(cx_decoder_t *dec)
    return line_breaks > 0;
 }
 
+static cx_inline bool
+cx_dec_match_strconst__impl(cx_decoder_t *dec, size_t len, bool (*match)(const uint8_t *))
+{
+   if (match(&dec->buffer[dec->position])) {
+      dec->position += len;
+      return true;
+   }
+   return false;
+}
+
+#define cx_dec_match_strconst(dec, strconst) \
+ cx_dec_match_strconst__impl(dec, cx_sc_##strconst##_len, cx_sc_##strconst##_match)
+
 // Parses a number.
 static cx_inline bool
 cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
@@ -127,29 +141,29 @@ cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
    // Had I used a more modern language like Zig this wouldn't be a problem, but alas, here we are.
 
    // Check for zero.
-   if (cx_dec_match_string(dec, cxstr("zero"))) {
+   if (cx_dec_match_strconst(dec, zero)) {
       return true;
    }
 
    // Check for hundreds.
    bool hundreds = true;
-   if (cx_dec_match_string(dec, cxstr("sto"))) {
+   if (cx_dec_match_strconst(dec, one_hundred)) {
       *out_number += 100;
-   } else if (cx_dec_match_string(dec, cxstr("dwieście"))) {
+   } else if (cx_dec_match_strconst(dec, two_hundred)) {
       *out_number += 200;
-   } else if (cx_dec_match_string(dec, cxstr("trzysta"))) {
+   } else if (cx_dec_match_strconst(dec, three_hundred)) {
       *out_number += 300;
-   } else if (cx_dec_match_string(dec, cxstr("czterysta"))) {
+   } else if (cx_dec_match_strconst(dec, four_hundred)) {
       *out_number += 400;
-   } else if (cx_dec_match_string(dec, cxstr("pięćset"))) {
+   } else if (cx_dec_match_strconst(dec, five_hundred)) {
       *out_number += 500;
-   } else if (cx_dec_match_string(dec, cxstr("sześćset"))) {
+   } else if (cx_dec_match_strconst(dec, six_hundred)) {
       *out_number += 600;
-   } else if (cx_dec_match_string(dec, cxstr("siedemset"))) {
+   } else if (cx_dec_match_strconst(dec, seven_hundred)) {
       *out_number += 700;
-   } else if (cx_dec_match_string(dec, cxstr("osiemset"))) {
+   } else if (cx_dec_match_strconst(dec, eight_hundred)) {
       *out_number += 800;
-   } else if (cx_dec_match_string(dec, cxstr("dziewięćset"))) {
+   } else if (cx_dec_match_strconst(dec, nine_hundred)) {
       *out_number += 900;
    } else {
       hundreds = false;
@@ -160,25 +174,25 @@ cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
 
    // Check for ten and n-teens.
    bool nteens = true;
-   if (cx_dec_match_string(dec, cxstr("dziesięć"))) {
+   if (cx_dec_match_strconst(dec, ten)) {
       *out_number += 10;
-   } else if (cx_dec_match_string(dec, cxstr("jedenaście"))) {
+   } else if (cx_dec_match_strconst(dec, eleven)) {
       *out_number += 11;
-   } else if (cx_dec_match_string(dec, cxstr("dwanaście"))) {
+   } else if (cx_dec_match_strconst(dec, twelve)) {
       *out_number += 12;
-   } else if (cx_dec_match_string(dec, cxstr("trzynaście"))) {
+   } else if (cx_dec_match_strconst(dec, thirteen)) {
       *out_number += 13;
-   } else if (cx_dec_match_string(dec, cxstr("czternaście"))) {
+   } else if (cx_dec_match_strconst(dec, fourteen)) {
       *out_number += 14;
-   } else if (cx_dec_match_string(dec, cxstr("piętnaście"))) {
+   } else if (cx_dec_match_strconst(dec, fifteen)) {
       *out_number += 15;
-   } else if (cx_dec_match_string(dec, cxstr("szesnaście"))) {
+   } else if (cx_dec_match_strconst(dec, sixteen)) {
       *out_number += 16;
-   } else if (cx_dec_match_string(dec, cxstr("siedemnaście"))) {
+   } else if (cx_dec_match_strconst(dec, seventeen)) {
       *out_number += 17;
-   } else if (cx_dec_match_string(dec, cxstr("osiemnaście"))) {
+   } else if (cx_dec_match_strconst(dec, eighteen)) {
       *out_number += 18;
-   } else if (cx_dec_match_string(dec, cxstr("dziewiętnaście"))) {
+   } else if (cx_dec_match_strconst(dec, nineteen)) {
       *out_number += 19;
    } else {
       nteens = false;
@@ -190,21 +204,21 @@ cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
 
    // Check for tens.
    bool tens = true;
-   if (cx_dec_match_string(dec, cxstr("dwadzieścia"))) {
+   if (cx_dec_match_strconst(dec, twenty)) {
       *out_number += 20;
-   } else if (cx_dec_match_string(dec, cxstr("trzydzieści"))) {
+   } else if (cx_dec_match_strconst(dec, thirty)) {
       *out_number += 30;
-   } else if (cx_dec_match_string(dec, cxstr("czterdzieści"))) {
+   } else if (cx_dec_match_strconst(dec, fourty)) {
       *out_number += 40;
-   } else if (cx_dec_match_string(dec, cxstr("pięćdziesiąt"))) {
+   } else if (cx_dec_match_strconst(dec, fifty)) {
       *out_number += 50;
-   } else if (cx_dec_match_string(dec, cxstr("sześćdziesiąt"))) {
+   } else if (cx_dec_match_strconst(dec, sixty)) {
       *out_number += 60;
-   } else if (cx_dec_match_string(dec, cxstr("siedemdziesiąt"))) {
+   } else if (cx_dec_match_strconst(dec, seventy)) {
       *out_number += 70;
-   } else if (cx_dec_match_string(dec, cxstr("osiemdziesiąt"))) {
+   } else if (cx_dec_match_strconst(dec, eighty)) {
       *out_number += 80;
-   } else if (cx_dec_match_string(dec, cxstr("dziewięćdziesiąt"))) {
+   } else if (cx_dec_match_strconst(dec, ninety)) {
       *out_number += 90;
    } else {
       tens = false;
@@ -214,23 +228,23 @@ cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
    }
 
    // Check for ones.
-   if (cx_dec_match_string(dec, cxstr("jeden"))) {
+   if (cx_dec_match_strconst(dec, one)) {
       *out_number += 1;
-   } else if (cx_dec_match_string(dec, cxstr("dwa"))) {
+   } else if (cx_dec_match_strconst(dec, two)) {
       *out_number += 2;
-   } else if (cx_dec_match_string(dec, cxstr("trzy"))) {
+   } else if (cx_dec_match_strconst(dec, three)) {
       *out_number += 3;
-   } else if (cx_dec_match_string(dec, cxstr("cztery"))) {
+   } else if (cx_dec_match_strconst(dec, four)) {
       *out_number += 4;
-   } else if (cx_dec_match_string(dec, cxstr("pięć"))) {
+   } else if (cx_dec_match_strconst(dec, five)) {
       *out_number += 5;
-   } else if (cx_dec_match_string(dec, cxstr("sześć"))) {
+   } else if (cx_dec_match_strconst(dec, six)) {
       *out_number += 6;
-   } else if (cx_dec_match_string(dec, cxstr("siedem"))) {
+   } else if (cx_dec_match_strconst(dec, seven)) {
       *out_number += 7;
-   } else if (cx_dec_match_string(dec, cxstr("osiem"))) {
+   } else if (cx_dec_match_strconst(dec, eight)) {
       *out_number += 8;
-   } else if (cx_dec_match_string(dec, cxstr("dziewięć"))) {
+   } else if (cx_dec_match_strconst(dec, nine)) {
       *out_number += 9;
    }
 
@@ -244,7 +258,7 @@ cx_dec_parse_number(cx_decoder_t *dec, uint32_t *out_number)
    // The calls to `cx_dec_parse_number_up_to_hundreds` are inlined so the compiler will optimize
    // the pointer away in its IR.
    uint32_t number = 0;
-   if (cx_dec_match_string(dec, cxstr("tysiąc"))) {
+   if (cx_dec_match_strconst(dec, thousand)) {
       number = 1000;
       if (!cx_dec_match_ws(dec)) {
          goto out;
@@ -253,9 +267,9 @@ cx_dec_parse_number(cx_decoder_t *dec, uint32_t *out_number)
    bool ok = cx_dec_parse_number_up_to_hundreds(dec, &number);
    if (ok && cx_dec_match_ws(dec)) {
       uint32_t ones = number % 10;
-      bool thousand = (number == 1 && cx_dec_match_string(dec, cxstr("tysiąc"))) ||
-         (ones >= 2 && ones <= 4 && cx_dec_match_string(dec, cxstr("tysiące"))) ||
-         cx_dec_match_string(dec, cxstr("tysięcy"));
+      bool thousand = (number == 1 && cx_dec_match_strconst(dec, thousand)) ||
+         (ones >= 2 && ones <= 4 && cx_dec_match_strconst(dec, thousands1)) ||
+         cx_dec_match_strconst(dec, thousands2);
       if (thousand) {
          number *= 1000;
       }
@@ -275,10 +289,10 @@ out:
 static cx_inline cifex_result_t
 cx_dec_parse_flags(cx_decoder_t *dec, cifex_flags_t *out_flags)
 {
-   cx_dec_try(cx_dec_match_string(dec, cxstr("CIF:")));
+   cx_dec_try(cx_dec_match_strconst(dec, k_header));
    cx_dec_try(cx_dec_match_ws(dec));
    // TODO: support for other flags, such as `english`, `compact`, `quadtree`.
-   cx_dec_try(cx_dec_match_string(dec, cxstr("polish")));
+   cx_dec_try(cx_dec_match_strconst(dec, flag_polish));
    cx_dec_try(cx_dec_match_lf(dec));
    *out_flags |= cifex_flag_polish;
 
@@ -289,7 +303,7 @@ cx_dec_parse_flags(cx_decoder_t *dec, cifex_flags_t *out_flags)
 static cx_inline cifex_result_t
 cx_dec_parse_version(cx_decoder_t *dec, uint32_t *out_version)
 {
-   cx_dec_try(cx_dec_match_string(dec, cxstr("WERSJA")));
+   cx_dec_try(cx_dec_match_strconst(dec, k_version));
    cx_dec_try(cx_dec_match_ws(dec));
    cx_dec_try(cx_dec_parse_number(dec, out_version));
    cx_dec_try(cx_dec_match_lf(dec));
@@ -304,22 +318,22 @@ cx_dec_parse_dimensions(cx_decoder_t *dec, cifex_image_t *out_image, cifex_alloc
    uint32_t width, height;
    uint32_t bpp;
 
-   cx_dec_try(cx_dec_match_string(dec, cxstr("ROZMIAR")));
+   cx_dec_try(cx_dec_match_strconst(dec, k_dimensions));
    cx_dec_try(cx_dec_match_ws(dec));
 
-   cx_dec_try(cx_dec_match_string(dec, cxstr("szerokość:")));
+   cx_dec_try(cx_dec_match_strconst(dec, k_width));
    cx_dec_try(cx_dec_match_ws(dec));
    cx_dec_try(cx_dec_parse_number(dec, &width));
    cx_dec_try(cx_dec_match(dec, ','));
    cx_dec_try(cx_dec_match_ws(dec));
 
-   cx_dec_try(cx_dec_match_string(dec, cxstr("wysokość:")));
+   cx_dec_try(cx_dec_match_strconst(dec, k_height));
    cx_dec_try(cx_dec_match_ws(dec));
    cx_dec_try(cx_dec_parse_number(dec, &height));
    cx_dec_try(cx_dec_match(dec, ','));
    cx_dec_try(cx_dec_match_ws(dec));
 
-   cx_dec_try(cx_dec_match_string(dec, cxstr("bitów_na_piksel:")));
+   cx_dec_try(cx_dec_match_strconst(dec, k_bpp));
    cx_dec_try(cx_dec_match_ws(dec));
    cx_dec_try(cx_dec_parse_number(dec, &bpp));
    cx_dec_try(cx_dec_match_lf(dec));
@@ -343,7 +357,7 @@ cx_dec_parse_metadata_field(
    uint8_t **out_value,
    size_t *out_value_len)
 {
-   cx_dec_try(cx_dec_match_string(dec, cxstr("METADANE")));
+   cx_dec_try(cx_dec_match_strconst(dec, k_metadata));
    cx_dec_try(cx_dec_match_ws(dec));
 
    size_t key_start = dec->position;
