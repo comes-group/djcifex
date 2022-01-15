@@ -9,6 +9,8 @@
 #include "cxensure.h"
 #include "cxstrings.h"
 
+#define CX_MAX_PATTERN_LEN 32
+
 // Reads all the data from the reader, and allocates it into a buffer.
 static cifex_result_t
 cx_read_all(
@@ -28,7 +30,7 @@ cx_read_all(
       return cifex_errno_result(errno);
    }
 
-   uint8_t *buffer = cifex_alloc(allocator, (size_t)file_size + 32);
+   uint8_t *buffer = cifex_alloc(allocator, (size_t)file_size + CX_MAX_PATTERN_LEN);
    if (buffer == NULL) {
       return cifex_out_of_memory;
    }
@@ -62,8 +64,8 @@ static cx_inline bool
 cx_dec_match_string(cx_decoder_t *dec, size_t string_len, const char *string)
 {
    cx_ensure(
-      string_len < 32,
-      "cx_dec_match_string may only be used with strings that are < 32 bytes long");
+      string_len < CX_MAX_PATTERN_LEN,
+      "matched string must be shorter than CX_MAX_PATTERN_LEN bytes");
    for (size_t i = 0; i < string_len; ++i) {
       if (dec->buffer[dec->position + i] != (uint8_t)string[i]) {
          return false;
