@@ -28,7 +28,7 @@ cx_read_all(
       return cifex_errno_result(errno);
    }
 
-   uint8_t *buffer = cifex_alloc(allocator, (size_t)file_size + 1);
+   uint8_t *buffer = cifex_alloc(allocator, (size_t)file_size + 32);
    if (buffer == NULL) {
       return cifex_out_of_memory;
    }
@@ -61,9 +61,9 @@ typedef struct cx_decoder
 static cx_inline bool
 cx_dec_match_string(cx_decoder_t *dec, size_t string_len, const char *string)
 {
-   if (dec->position + string_len - 1 >= dec->buffer_len) {
-      return false;
-   }
+   cx_ensure(
+      string_len < 32,
+      "cx_dec_match_string may only be used with strings that are < 32 bytes long");
    for (size_t i = 0; i < string_len; ++i) {
       if (dec->buffer[dec->position + i] != (uint8_t)string[i]) {
          return false;
@@ -77,9 +77,6 @@ cx_dec_match_string(cx_decoder_t *dec, size_t string_len, const char *string)
 static cx_inline bool
 cx_dec_match(cx_decoder_t *dec, uint8_t byte)
 {
-   if (dec->position >= dec->buffer_len) {
-      return false;
-   }
    if (dec->buffer[dec->position] != byte) {
       return false;
    }
