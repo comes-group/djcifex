@@ -38,6 +38,12 @@ typedef enum cifex_result
    cifex_empty_metadata_key,
    /// A language flag was not provided.
    cifex_missing_language,
+   /// A number was too big to encode.
+   cifex_number_too_large,
+   /// A metadata key contained invalid characters.
+   cifex_invalid_metadata_key,
+   /// A metadata value contained invalid characters.
+   cifex_invalid_metadata_value,
 
    cifex__last_own_result,
 
@@ -316,6 +322,8 @@ cifex_decode(
 /// `image_info` can be NULL, in which case default settings will be used together with a
 /// single metadata pair:
 ///  - `encoder`: `DJ Cifex`
+///
+/// Note that in case of error, this leaves `writer` with incomplete output.
 cifex_result_t
 cifex_encode(
    cifex_writer_t *writer,

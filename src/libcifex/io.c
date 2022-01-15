@@ -94,3 +94,19 @@ cifex_fclose_read(cifex_reader_t *reader)
 
    return cifex_ok;
 }
+
+cifex_result_t
+cifex_fclose_write(cifex_writer_t *writer)
+{
+   cx_ensure(writer != NULL, "writer must not be NULL");
+   cx_ensure(writer->user_data != NULL, "attempt to close an already closed writer");
+
+   FILE *file = writer->user_data;
+   if (fclose(file) != 0) {
+      return cifex_errno_result(errno);
+   }
+
+   writer->user_data = NULL;
+
+   return cifex_ok;
+}

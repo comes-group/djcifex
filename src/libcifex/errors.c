@@ -19,6 +19,9 @@ static const char *cx_result_strings[] = {
    [cifex_channel_out_of_range] = "channel is out of range (must be in 0..255)",
    [cifex_empty_metadata_key] = "metadata key must not be empty",
    [cifex_missing_language] = "no language flag was provided",
+   [cifex_number_too_large] = "number was too large to be encoded",
+   [cifex_invalid_metadata_key] = "metadata key cannot contain spaces",
+   [cifex_invalid_metadata_value] = "metadata key cannot contain line feeds",
 };
 
 static const char *cx_invalid_result = "<invalid result value>";

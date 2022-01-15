@@ -112,6 +112,7 @@ cxc_encode(cxc_encode_config_t c)
    }
    image.width = image_width;
    image.height = image_height;
+   image.channels = image_channels;
 
    cxc_try(cifex_fopen_write(&writer, c.output_file_name));
    cxc_try(cifex_encode(&writer, &image, NULL));
