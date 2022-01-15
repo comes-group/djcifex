@@ -9,7 +9,6 @@ cifex_alloc(cifex_allocator_t *allocator, size_t size)
 {
    cx_ensure(allocator != NULL, "allocator must not be NULL");
    void *ptr = allocator->malloc(allocator, size);
-   memset(ptr, 0, size);
    return ptr;
 }
 

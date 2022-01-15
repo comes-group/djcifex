@@ -88,8 +88,6 @@ typedef struct cifex_allocator
 } cifex_allocator_t;
 
 /// Allocates a memory region using the allocator. Returns `NULL` if no more memory is available.
-///
-/// The memory is cleared with zeroes.
 void *
 cifex_alloc(cifex_allocator_t *allocator, size_t size);
 
