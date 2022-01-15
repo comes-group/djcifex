@@ -16,6 +16,10 @@ cc = meson.get_compiler('c')
 libm = cc.find_library('m', required: false)
 
 python = import('python').find_installation('python3')
+supports_bytewise = [
+   'x86',
+   'x86_64',
+].contains(host_machine.cpu_family())
 strconsts = custom_target(
    'strconsts',
    input: ['strconsts.txt'],
@@ -24,6 +28,8 @@ strconsts = custom_target(
       python,
       '@CURRENT_SOURCE_DIR@/build_scripts/generate_strconsts.py',
       '@INPUT@', '@OUTPUT@',
+      '--bytewise', supports_bytewise.to_string(),
+      '--endianness', host_machine.endian(),
    ],
 )
 
