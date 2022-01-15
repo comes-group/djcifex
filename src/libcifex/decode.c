@@ -60,22 +60,6 @@ typedef struct cx_decoder
  if (!(expr)) \
   return cifex_syntax_error;
 
-// Matches a literal string.
-static cx_inline bool
-cx_dec_match_string(cx_decoder_t *dec, size_t string_len, const char *string)
-{
-   cx_ensure(
-      string_len < CX_MAX_PATTERN_LEN,
-      "matched string must be shorter than CX_MAX_PATTERN_LEN bytes");
-   for (size_t i = 0; i < string_len; ++i) {
-      if (dec->buffer[dec->position + i] != (uint8_t)string[i]) {
-         return false;
-      }
-   }
-   dec->position += string_len;
-   return true;
-}
-
 // Matches a single character.
 static cx_inline bool
 cx_dec_match(cx_decoder_t *dec, uint8_t byte)
