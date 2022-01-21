@@ -1,3 +1,0 @@
-CIF: polish
-WERSJA jeden
-ROZMIAR szerokość: tysiąc, wysokość: tysiąc, bitów_na_piksel: dwadzieścia cztery
