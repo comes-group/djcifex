@@ -32,10 +32,11 @@ strconsts = custom_target(
       '--endianness', host_machine.endian(),
    ],
 )
+strconsts_dependency = declare_dependency(sources: [strconsts])
 
 libcifex = static_library(
    'cifex', libcifex_src,
-   dependencies: [libm],
+   dependencies: [libm, strconsts_dependency],
    c_args: libcifex_c_args,
 )
 libcifex_dependency = declare_dependency(
