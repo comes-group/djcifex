@@ -232,7 +232,7 @@ cx_dec_parse_number_up_to_hundreds__inline(cx_decoder_t *dec, uint32_t *out_numb
       *out_number += 9;
    }
 
-   return out_number != 0;
+   return *out_number != 0;
 }
 
 static bool
@@ -276,7 +276,7 @@ static bool
 cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
 {
    uint32_t number = 0;
-   bool ok = cx_dec_parse_number_up_to_hundreds__inline(dec, out_number);
+   bool ok = cx_dec_parse_number_up_to_hundreds__inline(dec, &number);
    *out_number = number;
    return ok;
 }
