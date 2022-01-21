@@ -113,7 +113,7 @@ cx_dec_match_strconst__impl(cx_decoder_t *dec, size_t len, bool (*match)(const u
 
 // Parses a number.
 static cx_inline bool
-cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
+cx_dec_parse_number_up_to_hundreds__inline(cx_decoder_t *dec, uint32_t *out_number)
 {
    // NOTE(liquidev): Yes, this function is a giant chain of if-else statements, but there are a few
    // things that are keeping it from becoming less terrible:
@@ -248,7 +248,7 @@ cx_dec_parse_number(cx_decoder_t *dec, uint32_t *out_number)
          goto out;
       }
    }
-   bool ok = cx_dec_parse_number_up_to_hundreds(dec, &number);
+   bool ok = cx_dec_parse_number_up_to_hundreds__inline(dec, &number);
    if (ok && cx_dec_match_ws(dec)) {
       uint32_t ones = number % 10;
       bool thousand = (number == 1 && cx_dec_match_strconst(dec, thousand)) ||
@@ -259,7 +259,7 @@ cx_dec_parse_number(cx_decoder_t *dec, uint32_t *out_number)
       }
       uint32_t rest = 0;
       if (!thousand || cx_dec_match_ws(dec)) {
-         ok = cx_dec_parse_number_up_to_hundreds(dec, &rest);
+         ok = cx_dec_parse_number_up_to_hundreds__inline(dec, &rest);
          if (ok) {
             number += rest;
          }
@@ -269,6 +269,16 @@ cx_dec_parse_number(cx_decoder_t *dec, uint32_t *out_number)
 out:
    *out_number = number;
    return true;
+}
+
+// Non-inline version of `cx_dec_parse_number_up_to_hundreds__inline`.
+static bool
+cx_dec_parse_number_up_to_hundreds(cx_decoder_t *dec, uint32_t *out_number)
+{
+   uint32_t number = 0;
+   bool ok = cx_dec_parse_number_up_to_hundreds__inline(dec, out_number);
+   *out_number = number;
+   return ok;
 }
 
 // Parses the `CIF: polish` flags.
@@ -413,13 +423,13 @@ cx_dec_parse_pixels(cx_decoder_t *dec, cifex_image_t *inout_image, size_t *out_e
                // Parse the pixel.
                uint32_t r, g, b;
                bool syntax = false;
-               syntax |= !cx_dec_parse_number(dec, &r);
+               syntax |= !cx_dec_parse_number_up_to_hundreds(dec, &r);
                syntax |= !cx_dec_match(dec, ';');
                syntax |= !cx_dec_match_ws(dec);
-               syntax |= !cx_dec_parse_number(dec, &g);
+               syntax |= !cx_dec_parse_number_up_to_hundreds(dec, &g);
                syntax |= !cx_dec_match(dec, ';');
                syntax |= !cx_dec_match_ws(dec);
-               syntax |= !cx_dec_parse_number(dec, &b);
+               syntax |= !cx_dec_parse_number_up_to_hundreds(dec, &b);
                syntax |= !cx_dec_match_lf(dec);
                if (syntax != 0) {
                   syntax_error = dec->line;
@@ -446,16 +456,16 @@ cx_dec_parse_pixels(cx_decoder_t *dec, cifex_image_t *inout_image, size_t *out_e
                // Parse the pixel.
                uint32_t r, g, b, a;
                bool syntax = false;
-               syntax |= !cx_dec_parse_number(dec, &r);
+               syntax |= !cx_dec_parse_number_up_to_hundreds(dec, &r);
                syntax |= !cx_dec_match(dec, ';');
                syntax |= !cx_dec_match_ws(dec);
-               syntax |= !cx_dec_parse_number(dec, &g);
+               syntax |= !cx_dec_parse_number_up_to_hundreds(dec, &g);
                syntax |= !cx_dec_match(dec, ';');
                syntax |= !cx_dec_match_ws(dec);
-               syntax |= !cx_dec_parse_number(dec, &b);
+               syntax |= !cx_dec_parse_number_up_to_hundreds(dec, &b);
                syntax |= !cx_dec_match(dec, ';');
                syntax |= !cx_dec_match_ws(dec);
-               syntax |= !cx_dec_parse_number(dec, &a);
+               syntax |= !cx_dec_parse_number_up_to_hundreds(dec, &a);
                syntax |= !cx_dec_match_lf(dec);
                if (syntax) {
                   syntax_error = dec->line;
