@@ -258,9 +258,11 @@ cx_dec_parse_number(cx_decoder_t *dec, uint32_t *out_number)
          number *= 1000;
       }
       uint32_t rest = 0;
-      ok = cx_dec_parse_number_up_to_hundreds(dec, &rest);
-      if (ok) {
-         number += rest;
+      if (!thousand || cx_dec_match_ws(dec)) {
+         ok = cx_dec_parse_number_up_to_hundreds(dec, &rest);
+         if (ok) {
+            number += rest;
+         }
       }
    }
 
