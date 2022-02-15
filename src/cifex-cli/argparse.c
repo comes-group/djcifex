@@ -81,6 +81,10 @@ cxc_positional_args(cxc_arg_parser_t *ap, size_t n_positional, char ***out_strin
    if (ap->success)
       return;
    if (!cxc_is_option(ap, ap->position)) {
+      if (ap->positional_arg >= n_positional) {
+         fprintf(stderr, "error: too many positional arguments\n");
+         exit(-1);
+      }
       *(out_strings[ap->positional_arg]) = ap->argv[ap->position];
       ++ap->position;
       ++ap->positional_arg;
